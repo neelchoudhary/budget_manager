@@ -1,6 +1,6 @@
-# budget_manager
+# Budget Manager
 
-A budget manager.
+A budget manager in flutter.
 
 ## Getting Started
 
