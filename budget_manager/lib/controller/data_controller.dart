@@ -20,6 +20,9 @@ const secret_key_dev = "";
 const secret_key_sandbox = "";
 
 const bool plaidSandbox = false;
+
+// REDUX BRANCH
+
 Configuration plaidConfig = Configuration(
     plaidPublicKey: public_key,
     plaidBaseUrl: 'https://cdn.plaid.com/link/v2/stable/link.html',
