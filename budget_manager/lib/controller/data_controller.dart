@@ -90,6 +90,7 @@ class BudgetData {
   HashMap<String, IconData> iconMap = new HashMap<String, IconData>();
 
   // Initialize mapping of budget names to icons.
+  /// TODO app state
   void initIconMap() {
     this.iconMap.clear();
     this.iconMap.putIfAbsent("Dining In", () => Icons.restaurant);
