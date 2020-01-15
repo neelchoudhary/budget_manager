@@ -7,33 +7,39 @@ class AccountsList {
   final double totalBalance;
   final Status status;
   final String error;
+  final Map<int, Status> accountsByItemStatus;
 
   AccountsList(
       {this.allAccounts,
       this.selectedAccounts,
       this.totalBalance,
       this.status,
-      this.error});
+      this.error,
+      this.accountsByItemStatus});
 
   AccountsList.initialState()
       : this.allAccounts = List.unmodifiable(<Account>[]),
         this.selectedAccounts = List.unmodifiable(<Account>[]),
         this.totalBalance = 0,
         this.status = Status.INITIAL,
-        this.error = "";
+        this.error = "",
+        this.accountsByItemStatus = Map.unmodifiable(<int, Status>{});
 
   AccountsList copyWith(
       {List<Account> allAccounts,
       List<Account> selectedAccounts,
       double totalBalance,
       Status status,
-      String error}) {
+      String error,
+      Map<int, Status> accountsByItemStatus}) {
     return AccountsList(
-        allAccounts: allAccounts ?? this.allAccounts,
-        selectedAccounts: selectedAccounts ?? this.selectedAccounts,
-        totalBalance: totalBalance ?? this.totalBalance,
-        status: status ?? this.status,
-        error: error ?? this.error);
+      allAccounts: allAccounts ?? this.allAccounts,
+      selectedAccounts: selectedAccounts ?? this.selectedAccounts,
+      totalBalance: totalBalance ?? this.totalBalance,
+      status: status ?? this.status,
+      error: error ?? this.error,
+      accountsByItemStatus: accountsByItemStatus ?? this.accountsByItemStatus,
+    );
   }
 }
 
