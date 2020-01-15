@@ -14,12 +14,17 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert' as convert;
 
-const client_id = "";
-const public_key = "";
-const secret_key_dev = "";
-const secret_key_sandbox = "";
+//const client_id = "";
+//const public_key = "";
+//const secret_key_dev = "";
+//const secret_key_sandbox = "";
 
-const bool plaidSandbox = false;
+const client_id = "5e06c8f083a323001667b4ee";
+const public_key = "c6c58d5bd03f477459539909c18188";
+const secret_key_dev = "f71c7157bc8a980c8a27f1d5d0ed8f";
+const secret_key_sandbox = "02dc5db4dd28681e37559371be7afc";
+
+const bool plaidSandbox = true;
 
 // REDUX BRANCH
 

@@ -1,10 +1,14 @@
 import 'package:budget_manager/controller/data_controller.dart';
-import 'package:budget_manager/models/account.dart';
-import 'package:budget_manager/models/item.dart';
+import 'package:budget_manager/redux/actions/item_actions.dart';
+import 'package:budget_manager/redux/models/account.dart';
+import 'package:budget_manager/redux/models/app_state.dart';
+import 'package:budget_manager/redux/models/item.dart';
+import 'package:budget_manager/screens/account_page_view_model.dart';
 import 'package:budget_manager/utilities/constants.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_redux/flutter_redux.dart';
 import 'package:sliding_up_panel/sliding_up_panel.dart';
 import 'package:dots_indicator/dots_indicator.dart';
 
@@ -19,10 +23,7 @@ class _AccountsPageState extends State<AccountsPage> {
   @override
   void initState() {
     super.initState();
-    this._hasDataLoaded = this._loadData();
   }
-
-  Future<bool> _hasDataLoaded;
 
   List<Widget> _institutionsWidgets = [];
 
@@ -32,55 +33,28 @@ class _AccountsPageState extends State<AccountsPage> {
 
   int _selectedItemID;
 
-  Future<bool> _loadData() async {
-    bool dataLoaded = await budgetData.hasDataLoaded;
-    if (dataLoaded) {
-      this._updateView();
-    } else {
-      print("oof");
-    }
-    return true;
-  }
-
   Future<void> _createItemAndAccounts(
-      Result result, BuildContext context) async {
-    bool success = await budgetData.createItemAndAccounts(
+      Result result, AccountPageViewModel model) async {
+    model.addItemsAndAccountsButton(
         result.token,
-        result.accountIDs,
+        model.userID,
         result.institutionId,
+        result.accountIDs,
         result.accountNames,
         result.accountMasks,
         result.accountSubtypes);
-    if (!success) {
-//      final snackBar = SnackBar(
-//        content: Text('Account already exists.'),
-//      );
-//
-//      Scaffold.of(context).showSnackBar(snackBar);
-    } else {
-//      final snackBar = SnackBar(
-//        content: Text('Linked Account!.'),
-//      );
-//
-//      Scaffold.of(context).showSnackBar(snackBar);
-    }
-    await budgetData.getItemsAndAccounts();
-    this._updateView();
   }
 
-  Future<void> _refreshAccounts() async {
-    await budgetData.refreshAccounts();
-    this._updateView();
+  Future<void> _refreshAccounts(AccountPageViewModel model) async {
+    model.onRefresh();
   }
 
-  Future<void> _removeItem(int itemID) async {
-    await budgetData.removeItem(itemID);
-    this._updateView();
+  void _removeItem(int itemID, AccountPageViewModel model) {
+    model.removeItemButton(model.userID, itemID);
   }
 
-  Future<void> _removeAccount(int itemID, int accountID) async {
-    await budgetData.removeAccount(itemID, accountID);
-    this._updateView();
+  void _removeAccount(int itemID, int accountID, AccountPageViewModel model) {
+    model.removeAccountButton(itemID, accountID);
   }
 
   void _openAccountsSlider(String institutionName, int itemID) {
@@ -91,38 +65,35 @@ class _AccountsPageState extends State<AccountsPage> {
     this._pc.open();
   }
 
-  void _selectAccount(bool selected, int accountID) {
-    print("Select accountID: " +
-        accountID.toString() +
-        " " +
-        selected.toString());
-    budgetData.allAccounts.firstWhere((a) => a.id == accountID).selected =
-        selected;
-    setState(() {});
+  void _selectAccount(
+      bool selected, int accountID, AccountPageViewModel model) {
+    model.toggleAccountCheckbox(accountID, selected);
   }
 
-  void _confirmAccounts(int itemID) async {
+  void _confirmAccounts(int itemID, AccountPageViewModel model) {
     this._pc.close();
-    await budgetData.selectAccounts(itemID);
-    this._updateView();
+    model.confirmAccountsButton(itemID);
   }
 
-  void _updateView() {
+  void _updateView(AccountPageViewModel model) {
     this._institutionsWidgets.clear();
-    for (Item item in budgetData.items) {
+    for (Item item in model.itemsList.items) {
       List<Widget> bankAccountWidgets = [];
-      for (Account account in budgetData.selectedAccounts) {
-        if (account.itemId == item.id) {
-          bankAccountWidgets.add(BankAccountCard(
-              itemID: item.id,
-              accountID: account.id,
-              accountName: account.accountName,
-              accountNumber: account.accountMask,
-              accountBalance: account.currentBalance.toString(),
-              accountType: account.accountSubType,
-              institutionColor: item.institutionColor,
-              institutionLogo: item.institutionLogo,
-              removeAccountCallback: this._removeAccount));
+      for (Account account in model.accountsList.selectedAccounts) {
+        if (account.itemID == item.id) {
+          bankAccountWidgets.add(
+            BankAccountCard(
+                itemID: item.id,
+                accountID: account.id,
+                accountName: account.accountName,
+                accountNumber: account.accountMask,
+                accountBalance: account.currentBalance.toString(),
+                accountType: account.accountSubType,
+                institutionColor: item.institutionColor,
+                institutionLogo: item.institutionLogo,
+                removeAccountCallback: this._removeAccount,
+                model: model),
+          );
           bankAccountWidgets.add(SizedBox(width: 10));
         }
       }
@@ -136,33 +107,25 @@ class _AccountsPageState extends State<AccountsPage> {
               bankAccountWidgets: bankAccountWidgets,
               removeItemCallback: this._removeItem,
               addBankAccountCallback: this._openAccountsSlider,
+              model: model,
+              selectedAccounts: model.accountsList.selectedAccounts,
             ),
           );
       this._institutionsWidgets.add(SizedBox(height: 10));
     }
-    setState(() {});
   }
 
   final PanelController _pc = PanelController();
 
   @override
   Widget build(BuildContext context) {
-    void createItemsPlaidLink(context) async {
-      FlutterPlaidApi flutterPlaidApi = FlutterPlaidApi(plaidConfig);
-      flutterPlaidApi.launch(context, (Result result) async {
-        //    print("RESULTSSSSS: " + result.response.toString());
-
-        this._createItemAndAccounts(result, context);
-      });
-    }
-
     return Scaffold(
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
-        currentIndex: _currentPageIndex,
+        currentIndex: this._currentPageIndex,
         onTap: (value) {
           setState(() {
-            _currentPageIndex = value;
+            this._currentPageIndex = value;
             if (value == 0) {
               // go to dashboard
               Navigator.pushReplacementNamed(context, '/');
@@ -189,177 +152,130 @@ class _AccountsPageState extends State<AccountsPage> {
       body: AnnotatedRegion<SystemUiOverlayStyle>(
         value: SystemUiOverlayStyle.dark,
         child: SafeArea(
-          child: RefreshIndicator(
-            onRefresh: this._refreshAccounts,
-            child: SlidingUpPanel(
-              controller: this._pc,
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(24.0),
-                topRight: Radius.circular(24.0),
-              ),
-              minHeight: 0,
-              //  padding: EdgeInsets.all(6.0),
-              renderPanelSheet: true,
-              backdropEnabled: true,
-              padding: EdgeInsets.symmetric(horizontal: 20),
-              panel: SlidingAccountsPanel(
-                institutionName: this._selectedInstitutionName,
-                itemID: this._selectedItemID,
-                selectAccountCallback: _selectAccount,
-                confirmAccountsCallback: _confirmAccounts,
-              ),
-              body: Padding(
-                padding: const EdgeInsets.fromLTRB(25, 15, 8, 8),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: <Widget>[
-                        Padding(
-                          padding: const EdgeInsets.only(left: 8.0),
-                          child: CircleAvatar(
-                            backgroundImage: NetworkImage(prof_pic),
-                          ),
-                        ),
-                        Text(
-                          "Bank Accounts",
-                          style: TextStyle(fontSize: 20),
-                        ),
-                        SizedBox(
-                          width: 60,
-                          height: 50,
-                          child: FlatButton.icon(
-                              onPressed: () {
-                                createItemsPlaidLink(context);
-                              },
-                              icon: Icon(Icons.add),
-                              label: Text("")),
-                        ),
-                      ],
-                    ),
-                    SizedBox(
-                      height: 10,
-                    ),
-                    FutureBuilder<bool>(
-                      future: this._hasDataLoaded,
-                      builder:
-                          (BuildContext context, AsyncSnapshot<bool> snapshot) {
-                        Widget content;
-                        if (snapshot.hasData) {
-                          content = Container(
-                            height: 600,
-                            width: double.infinity,
-                            child: ListView.builder(
-                              itemCount: this._institutionsWidgets.length,
-                              itemBuilder: (BuildContext c, int i) {
-                                return this._institutionsWidgets[i];
-                              },
-                              padding: EdgeInsets.all(8),
-                              scrollDirection: Axis.vertical,
-                            ),
-                          );
-                        } else {
-                          content = Center(
-                            child: Padding(
-                              padding: const EdgeInsets.only(top: 10),
-                              child: SizedBox(
-                                child: CircularProgressIndicator(),
-                                width: 60,
-                                height: 60,
-                              ),
-                            ),
-                          );
-                        }
-                        return content;
-                      },
-                    ),
-                  ],
-                ),
-              ),
-            ),
+          child: StoreConnector<AppState, AccountPageViewModel>(
+            onInitialBuild: (AccountPageViewModel viewModel) {
+              viewModel.onInit();
+            },
+            converter: (store) => AccountPageViewModel.fromStore(store),
+            builder: (BuildContext bc, AccountPageViewModel viewModel) {
+              if (viewModel.itemsList.status == Status.LOADING) {
+                // Show loading items screen
+                print("LOADING ITEMS");
+              } else if (viewModel.itemsList.status == Status.SUCCESS) {
+                // Show items
+                print("SUCCESS ITEMS");
+              } else if (viewModel.itemsList.status == Status.ERROR) {
+                // Show error items screen
+              }
+
+              if (viewModel.accountsList.status == Status.LOADING) {
+                // Show loading accounts screen
+                print("LOADING ACCOUNTS");
+              } else if (viewModel.accountsList.status == Status.SUCCESS) {
+                // Show accounts
+                print("SUCCESS ACCCOUNTS");
+              } else if (viewModel.accountsList.status == Status.ERROR) {
+                // Show error accounts screen
+              }
+
+              if (viewModel.itemsList.status == Status.SUCCESS &&
+                  viewModel.accountsList.status == Status.SUCCESS) {
+                // FINISHED GETTING
+                print("FINISHED GETTING DATA");
+              }
+              return _accountPageContent(context, viewModel);
+            },
           ),
         ),
       ),
     );
   }
-}
 
-class SlidingAccountsPanel extends StatelessWidget {
-  final String institutionName;
-  final int itemID;
-  final List<Widget> _bankAccountTiles = [];
-  final Function selectAccountCallback;
-  final Function confirmAccountsCallback;
-
-  SlidingAccountsPanel(
-      {this.institutionName,
-      this.itemID,
-      this.selectAccountCallback,
-      this.confirmAccountsCallback});
-
-  void updateAccountsListView(int itemID) {
-    this._bankAccountTiles.clear();
-    for (Account account in budgetData.allAccounts) {
-      if (account.itemId == itemID) {
-        this._bankAccountTiles.add(
-              BankAccountTile(
-                itemID: this.itemID,
-                accountID: account.id,
-                accountName: account.accountName,
-                accountNumber: account.accountMask,
-                accountBalance: account.currentBalance.toString(),
-                institutionColor: account.color,
-                isSelected: account.selected,
-                selectButtonCallback: this.selectAccountCallback,
-              ),
-            );
-        this._bankAccountTiles.add(SizedBox(width: 10));
-      }
-    }
+  void _createItemsPlaidLink(context, AccountPageViewModel model) async {
+    FlutterPlaidApi flutterPlaidApi = FlutterPlaidApi(plaidConfig);
+    flutterPlaidApi.launch(context, (Result result) async {
+      this._createItemAndAccounts(result, model);
+    });
   }
 
-  @override
-  Widget build(BuildContext context) {
-    this.updateAccountsListView(this.itemID);
-    return Column(
-      children: <Widget>[
-        SizedBox(
-          height: 15.0,
+  RefreshIndicator _accountPageContent(
+      BuildContext context, AccountPageViewModel viewModel) {
+    _updateView(viewModel);
+    return RefreshIndicator(
+      onRefresh: () async {
+        this._refreshAccounts(viewModel);
+        //   await Future.delayed(Duration(seconds: 1));
+        return;
+      },
+      child: SlidingUpPanel(
+        controller: this._pc,
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(24.0),
+          topRight: Radius.circular(24.0),
         ),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: <Widget>[
-            Text(
-              "Add ${this.institutionName} Bank Account",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-            ),
-            RaisedButton.icon(
-              onPressed: () {
-                this.confirmAccountsCallback(this.itemID);
-              },
-              icon: Icon(Icons.check),
-              label: Text("Confirm"),
-            ),
-          ],
+        minHeight: 0,
+        //  padding: EdgeInsets.all(6.0),
+        renderPanelSheet: true,
+        backdropEnabled: true,
+        padding: EdgeInsets.symmetric(horizontal: 20),
+        panel: SlidingAccountsPanel(
+          institutionName: this._selectedInstitutionName,
+          itemID: this._selectedItemID,
+          selectAccountCallback: _selectAccount,
+          confirmAccountsCallback: _confirmAccounts,
+          allAccounts: viewModel.accountsList.allAccounts,
+          model: viewModel,
         ),
-        SizedBox(
-          height: 15.0,
-        ),
-        Container(
-          height: 380,
-          width: double.infinity,
-          child: ListView.builder(
-            itemCount: this._bankAccountTiles.length,
-            itemBuilder: (BuildContext c, int i) {
-              return this._bankAccountTiles[i];
-            },
-            scrollDirection: Axis.vertical,
+        body: Padding(
+          padding: const EdgeInsets.fromLTRB(25, 15, 8, 8),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: <Widget>[
+                  Padding(
+                    padding: const EdgeInsets.only(left: 8.0),
+                    child: CircleAvatar(
+                      backgroundImage: NetworkImage(prof_pic),
+                    ),
+                  ),
+                  Text(
+                    "Bank Accounts",
+                    style: TextStyle(fontSize: 20),
+                  ),
+                  SizedBox(
+                    width: 60,
+                    height: 50,
+                    child: FlatButton.icon(
+                        onPressed: () {
+                          _createItemsPlaidLink(context, viewModel);
+                        },
+                        icon: Icon(Icons.add),
+                        label: Text("")),
+                  ),
+                ],
+              ),
+              SizedBox(
+                height: 10,
+              ),
+              Container(
+                height: 600,
+                width: double.infinity,
+                child: ListView.builder(
+                  itemCount: this._institutionsWidgets.length,
+                  itemBuilder: (BuildContext c, int i) {
+                    return this._institutionsWidgets[i];
+                  },
+                  padding: EdgeInsets.all(8),
+                  scrollDirection: Axis.vertical,
+                ),
+              )
+            ],
           ),
         ),
-      ],
+      ),
     );
   }
 }
@@ -372,6 +288,8 @@ class InstitutionView extends StatefulWidget {
   final List<Widget> bankAccountWidgets;
   final Function removeItemCallback;
   final Function addBankAccountCallback;
+  final List<Account> selectedAccounts;
+  final AccountPageViewModel model;
 
   InstitutionView(
       {this.itemID,
@@ -380,7 +298,9 @@ class InstitutionView extends StatefulWidget {
       this.institutionLogo,
       this.bankAccountWidgets,
       this.removeItemCallback,
-      this.addBankAccountCallback});
+      this.addBankAccountCallback,
+      this.selectedAccounts,
+      this.model});
 
   @override
   _InstitutionViewState createState() => _InstitutionViewState();
@@ -393,8 +313,10 @@ class _InstitutionViewState extends State<InstitutionView> {
     double minPos = this._controller.position.minScrollExtent;
     double maxPos = this._controller.position.maxScrollExtent;
     double range = maxPos - minPos;
-    int items = budgetData.selectedAccounts
-        .where((a) => a.itemId == this.widget.itemID)
+    int items = this
+        .widget
+        .selectedAccounts
+        .where((a) => a.itemID == this.widget.itemID)
         .length;
     double itemLength = range / items;
     double offset = _controller.offset;
@@ -442,7 +364,8 @@ class _InstitutionViewState extends State<InstitutionView> {
                   onChanged: (String newValue) {
                     if (newValue == 'Remove Bank') {
                       _controller.jumpTo(0);
-                      this.widget.removeItemCallback(this.widget.itemID);
+                      this.widget.removeItemCallback(
+                          this.widget.itemID, this.widget.model);
                     } else if (newValue == 'Add/Remove Accounts') {
                       _controller.jumpTo(0);
                       this.widget.addBankAccountCallback(
@@ -475,8 +398,10 @@ class _InstitutionViewState extends State<InstitutionView> {
               ),
             ),
             DotsIndicator(
-                dotsCount: budgetData.selectedAccounts
-                    .where((a) => a.itemId == this.widget.itemID)
+                dotsCount: this
+                    .widget
+                    .selectedAccounts
+                    .where((a) => a.itemID == this.widget.itemID)
                     .length,
                 position: this.itemPos.toDouble()),
           ],
@@ -496,6 +421,7 @@ class BankAccountCard extends StatelessWidget {
   final Color institutionColor;
   final Image institutionLogo;
   final Function removeAccountCallback;
+  final AccountPageViewModel model;
 
   BankAccountCard(
       {this.itemID,
@@ -506,7 +432,8 @@ class BankAccountCard extends StatelessWidget {
       this.accountNumber,
       this.institutionColor,
       this.institutionLogo,
-      this.removeAccountCallback});
+      this.removeAccountCallback,
+      this.model});
 
   @override
   Widget build(BuildContext context) {
@@ -549,7 +476,8 @@ class BankAccountCard extends StatelessWidget {
               ),
               onChanged: (String newValue) {
                 if (newValue == 'Delete') {
-                  this.removeAccountCallback(this.itemID, this.accountID);
+                  this.removeAccountCallback(
+                      this.itemID, this.accountID, this.model);
                 }
               },
               items: <String>['Delete']
@@ -629,6 +557,89 @@ class BankAccountCard extends StatelessWidget {
   }
 }
 
+class SlidingAccountsPanel extends StatelessWidget {
+  final String institutionName;
+  final int itemID;
+  final List<Widget> _bankAccountTiles = [];
+  final Function selectAccountCallback;
+  final Function confirmAccountsCallback;
+  final List<Account> allAccounts;
+  final AccountPageViewModel model;
+
+  SlidingAccountsPanel(
+      {this.institutionName,
+      this.itemID,
+      this.selectAccountCallback,
+      this.confirmAccountsCallback,
+      this.allAccounts,
+      this.model});
+
+  void updateAccountsListView(int itemID) {
+    this._bankAccountTiles.clear();
+    for (Account account in this.allAccounts) {
+      if (account.itemID == itemID) {
+        this._bankAccountTiles.add(
+              BankAccountTile(
+                itemID: this.itemID,
+                accountID: account.id,
+                accountName: account.accountName,
+                accountNumber: account.accountMask,
+                accountBalance: account.currentBalance.toString(),
+                institutionColor: account.color,
+                isSelected: account.selected,
+                selectButtonCallback: this.selectAccountCallback,
+                model: this.model,
+              ),
+            );
+        this._bankAccountTiles.add(SizedBox(width: 10));
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    this.updateAccountsListView(this.itemID);
+    return Column(
+      children: <Widget>[
+        SizedBox(
+          height: 15.0,
+        ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: <Widget>[
+            Text(
+              "Add ${this.institutionName} Bank Account",
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+            ),
+            RaisedButton.icon(
+              onPressed: () {
+                this.confirmAccountsCallback(this.itemID, this.model);
+              },
+              icon: Icon(Icons.check),
+              label: Text("Confirm"),
+            ),
+          ],
+        ),
+        SizedBox(
+          height: 15.0,
+        ),
+        Container(
+          height: 380,
+          width: double.infinity,
+          child: ListView.builder(
+            itemCount: this._bankAccountTiles.length,
+            itemBuilder: (BuildContext c, int i) {
+              return this._bankAccountTiles[i];
+            },
+            scrollDirection: Axis.vertical,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 class BankAccountTile extends StatelessWidget {
   final int itemID;
   final int accountID;
@@ -638,6 +649,7 @@ class BankAccountTile extends StatelessWidget {
   final Color institutionColor;
   final bool isSelected;
   final Function selectButtonCallback;
+  final AccountPageViewModel model;
 
   BankAccountTile(
       {this.itemID,
@@ -647,7 +659,8 @@ class BankAccountTile extends StatelessWidget {
       this.accountNumber,
       this.institutionColor,
       this.isSelected,
-      this.selectButtonCallback});
+      this.selectButtonCallback,
+      this.model});
 
   @override
   Widget build(BuildContext context) {
@@ -655,7 +668,7 @@ class BankAccountTile extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
       child: GestureDetector(
         onTap: () {
-          this.selectButtonCallback(!isSelected, this.accountID);
+          this.selectButtonCallback(!isSelected, this.accountID, this.model);
         },
         child: Container(
           constraints: BoxConstraints(minHeight: 60, minWidth: 200),
@@ -716,7 +729,7 @@ class BankAccountTile extends StatelessWidget {
                               value: this.isSelected,
                               onChanged: (newVal) {
                                 this.selectButtonCallback(
-                                    newVal, this.accountID);
+                                    newVal, this.accountID, this.model);
                               }),
                         ),
                         SizedBox(

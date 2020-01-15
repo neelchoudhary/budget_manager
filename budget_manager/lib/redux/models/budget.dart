@@ -12,7 +12,7 @@ class BudgetsList {
   BudgetsList.initialState()
       : this.budgets = List.unmodifiable(<Budget>[]),
         this.totalSpent = 0,
-        this.status = Status.SUCCESS,
+        this.status = Status.INITIAL,
         this.error = "";
 
   BudgetsList copyWith(

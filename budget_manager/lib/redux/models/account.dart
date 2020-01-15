@@ -19,7 +19,7 @@ class AccountsList {
       : this.allAccounts = List.unmodifiable(<Account>[]),
         this.selectedAccounts = List.unmodifiable(<Account>[]),
         this.totalBalance = 0,
-        this.status = Status.SUCCESS,
+        this.status = Status.INITIAL,
         this.error = "";
 
   AccountsList copyWith(

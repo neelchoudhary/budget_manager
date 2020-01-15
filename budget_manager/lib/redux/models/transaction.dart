@@ -24,7 +24,7 @@ class TransactionsList {
         this.endDate = DateTime.now().add(Duration(days: 1)),
         this.startDate =
             DateTime.now().add(Duration(days: -30)), // TODO CHANGE THIS
-        this.status = Status.SUCCESS,
+        this.status = Status.INITIAL,
         this.error = "";
 
   TransactionsList copyWith(

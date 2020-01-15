@@ -23,58 +23,63 @@ AppState appStateReducer(AppState state, action) {
 }
 
 Reducer<ItemsList> itemReducer = combineReducers<ItemsList>([
-  TypedReducer<ItemsList, SuccessItemsAction>(successItemsReducer),
-  TypedReducer<ItemsList, ErrorItemsAction>(errorItemsReducer),
-  TypedReducer<ItemsList, LoadedItemsAction>(loadItemsReducer),
+  TypedReducer<ItemsList, SuccessItemAction>(successItemsReducer),
+  TypedReducer<ItemsList, ErrorItemAction>(errorItemsReducer),
+  TypedReducer<ItemsList, LoadItemAction>(loadItemsReducer),
 ]);
 
-ItemsList successItemsReducer(ItemsList items, SuccessItemsAction action) {
-  return items.copyWith(status: Status.SUCCESS, error: "");
+ItemsList loadItemsReducer(ItemsList items, LoadItemAction action) {
+  return items.copyWith(status: Status.LOADING, error: "");
 }
 
-ItemsList errorItemsReducer(ItemsList items, ErrorItemsAction action) {
+ItemsList successItemsReducer(ItemsList items, SuccessItemAction action) {
+  return items.copyWith(
+      status: Status.SUCCESS, error: "", items: action.payload ?? null);
+}
+
+ItemsList errorItemsReducer(ItemsList items, ErrorItemAction action) {
+  print("Error: ${action.error.toString()}");
   return items.copyWith(
       status: Status.ERROR,
       error: action.statusCode.toString() + " " + action.error);
 }
 
-ItemsList loadItemsReducer(ItemsList items, LoadedItemsAction action) {
-  return items.copyWith(items: action.items, status: Status.SUCCESS, error: "");
-}
-
 Reducer<AccountsList> accountReducer = combineReducers<AccountsList>([
-  TypedReducer<AccountsList, SuccessAccountsAction>(successAccountsReducer),
+  TypedReducer<AccountsList, LoadAccountAction>(loadAccountsReducer),
+  TypedReducer<AccountsList, SuccessAccountAction>(successAccountsReducer),
   TypedReducer<AccountsList, ErrorAccountsAction>(errorAccountsReducer),
-  TypedReducer<AccountsList, LoadedAccountsAction>(loadAccountsReducer),
   TypedReducer<AccountsList, ToggleSelectedAccountAction>(
       toggleSelectedAccountReducer),
 ]);
 
 AccountsList successAccountsReducer(
-    AccountsList accounts, SuccessAccountsAction action) {
-  return accounts.copyWith(status: Status.SUCCESS, error: "");
+    AccountsList accounts, SuccessAccountAction action) {
+  /// Move this to another middlewear
+  List<Account> allAccounts = action.payload ?? accounts.allAccounts;
+  allAccounts.sort((a1, a2) => a1.accountPlaidID.compareTo(a2.accountPlaidID));
+  List<Account> updatedSelectedAccounts = [];
+  updatedSelectedAccounts.addAll(allAccounts.where((a) => a.selected).toList());
+  double totalBalance = updatedSelectedAccounts.fold(
+      0, (sum, element) => sum + element.currentBalance);
+  return accounts.copyWith(
+      allAccounts: allAccounts ?? accounts.allAccounts,
+      selectedAccounts: updatedSelectedAccounts ?? accounts.selectedAccounts,
+      totalBalance: totalBalance,
+      status: Status.SUCCESS,
+      error: "");
 }
 
 AccountsList errorAccountsReducer(
     AccountsList accounts, ErrorAccountsAction action) {
+  print("Accounts Error: ${action.error.toString()}");
   return accounts.copyWith(
       status: Status.ERROR,
       error: action.statusCode.toString() + " " + action.error);
 }
 
 AccountsList loadAccountsReducer(
-    AccountsList accounts, LoadedAccountsAction action) {
-  List<Account> updatedSelectedAccounts = [];
-  updatedSelectedAccounts
-      .addAll(accounts.allAccounts.where((a) => a.selected).toList());
-  double totalBalance = updatedSelectedAccounts.fold(
-      0, (sum, element) => sum + element.currentBalance);
-  return accounts.copyWith(
-      allAccounts: action.accounts,
-      selectedAccounts: updatedSelectedAccounts,
-      totalBalance: totalBalance,
-      status: Status.SUCCESS,
-      error: "");
+    AccountsList accounts, LoadAccountAction action) {
+  return accounts.copyWith(status: Status.LOADING, error: "");
 }
 
 AccountsList toggleSelectedAccountReducer(
@@ -88,6 +93,10 @@ AccountsList toggleSelectedAccountReducer(
   List<Account> updatedSelectedAccounts = [];
   updatedSelectedAccounts
       .addAll(accounts.allAccounts.where((a) => a.selected).toList());
+  updatedAllAccounts
+      .sort((a1, a2) => a1.accountPlaidID.compareTo(a2.accountPlaidID));
+  updatedSelectedAccounts
+      .sort((a1, a2) => a1.accountPlaidID.compareTo(a2.accountPlaidID));
   return accounts.copyWith(
       allAccounts: updatedAllAccounts,
       selectedAccounts: updatedSelectedAccounts);

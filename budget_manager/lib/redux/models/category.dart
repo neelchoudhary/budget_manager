@@ -10,7 +10,7 @@ class CategoriesList {
 
   CategoriesList.initialState()
       : this.categories = List.unmodifiable(<Category>[]),
-        this.status = Status.SUCCESS,
+        this.status = Status.INITIAL,
         this.error = "";
 
   CategoriesList copyWith(

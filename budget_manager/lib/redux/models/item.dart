@@ -11,7 +11,7 @@ class ItemsList {
 
   ItemsList.initialState()
       : items = List.unmodifiable(<Item>[]),
-        status = Status.SUCCESS,
+        status = Status.INITIAL,
         error = "";
 
   ItemsList copyWith({List<Item> items, Status status, String error}) {
