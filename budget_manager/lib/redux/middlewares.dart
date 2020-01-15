@@ -101,13 +101,15 @@ class AccountsMiddleware extends MiddlewareClass<AppState> {
   @override
   void call(Store<AppState> store, dynamic action, NextDispatcher next) {
     if (action is UpdateSelectedAccountsAction) {
+      store.dispatch(LoadAccountAction());
+      store.dispatch(LoadAccountItemAction(itemID: action.itemID));
       Network.toggleAccountsInServer(
               itemID: action.itemID,
               allAccounts: store.state.accountsList.allAccounts)
           .then((void _) {
         store.dispatch(new SuccessAccountAction());
-        store.dispatch(GetItemsAndAccountsAction(
-            userID: store.state.userID, forceRefresh: true));
+        store.dispatch(new SuccessAccountItemAction(itemID: action.itemID));
+        store.dispatch(GetAccountsAction(forceRefresh: true));
       }).catchError((Object error) {
         store.dispatch(
             // TODO more descriptive errors.
@@ -116,12 +118,14 @@ class AccountsMiddleware extends MiddlewareClass<AppState> {
     }
 
     if (action is RemoveAccountAction) {
+      store.dispatch(LoadAccountAction());
+      store.dispatch(LoadAccountItemAction(itemID: action.itemID));
       Network.hideAccountInServer(
               itemID: action.itemID, accountID: action.accountID)
           .then((void _) {
         store.dispatch(new SuccessAccountAction());
-        store.dispatch(GetItemsAndAccountsAction(
-            userID: store.state.userID, forceRefresh: true));
+        store.dispatch(new SuccessAccountItemAction(itemID: action.itemID));
+        store.dispatch(GetAccountsAction(forceRefresh: true));
       }).catchError((Object error) {
         store.dispatch(
             new ErrorAccountsAction(statusCode: 400, error: error.toString()));
@@ -129,6 +133,7 @@ class AccountsMiddleware extends MiddlewareClass<AppState> {
     }
 
     if (action is UpdateAccountsAction) {
+      store.dispatch(LoadAccountAction());
       Network.updateAccountsInServer().then((void _) {
         store.dispatch(new SuccessAccountAction());
         store.dispatch(GetItemsAndAccountsAction(

@@ -1,9 +1,3 @@
-import 'package:budget_manager/networking/network.dart';
-import 'package:budget_manager/redux/models/account.dart';
-import 'package:budget_manager/redux/models/app_state.dart';
-import 'package:redux_thunk/redux_thunk.dart';
-import 'package:redux/redux.dart';
-
 // API Actions
 class UpdateSelectedAccountsAction {
   final int itemID;
@@ -42,6 +36,26 @@ class ErrorAccountsAction {
 
 class LoadAccountAction {}
 
+class LoadAccountItemAction {
+  final int itemID;
+
+  LoadAccountItemAction({this.itemID});
+}
+
+class SuccessAccountItemAction {
+  final int itemID;
+
+  SuccessAccountItemAction({this.itemID});
+}
+
+class ErrorAccountItemAction {
+  final int itemID;
+  final int statusCode;
+  final String error;
+
+  ErrorAccountItemAction({this.itemID, this.statusCode, this.error});
+}
+
 // State Actions
 class ToggleSelectedAccountAction {
   final int accountID;
@@ -49,21 +63,3 @@ class ToggleSelectedAccountAction {
 
   ToggleSelectedAccountAction({this.accountID, this.selected});
 }
-
-//ThunkAction<AppState> getAccountsAction({bool forceRefresh}) {
-//  return (Store<AppState> store) async {
-//    if (store.state.accountsList.allAccounts.isEmpty || forceRefresh) {
-//      var getAccounts =
-//          Network.getAccountsFromServer(items: store.state.itemsList.items)
-//              .then((List<Account> accounts) {
-//        store.dispatch(LoadedAccountsAction(accounts: accounts));
-//      }).catchError((Object error) {
-//        store.dispatch(
-//            new ErrorAccountsAction(statusCode: 400, error: error.toString()));
-//      });
-//      store.dispatch(getAccounts);
-//    } else {
-//      store.dispatch(SuccessAccountsAction());
-//    }
-//  };
-//}

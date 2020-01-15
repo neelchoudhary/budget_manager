@@ -46,6 +46,10 @@ ItemsList errorItemsReducer(ItemsList items, ErrorItemAction action) {
 
 Reducer<AccountsList> accountReducer = combineReducers<AccountsList>([
   TypedReducer<AccountsList, LoadAccountAction>(loadAccountsReducer),
+  TypedReducer<AccountsList, LoadAccountItemAction>(loadAccountItemReducer),
+  TypedReducer<AccountsList, SuccessAccountItemAction>(
+      successAccountItemReducer),
+  TypedReducer<AccountsList, ErrorAccountItemAction>(errorAccountItemReducer),
   TypedReducer<AccountsList, SuccessAccountAction>(successAccountsReducer),
   TypedReducer<AccountsList, ErrorAccountsAction>(errorAccountsReducer),
   TypedReducer<AccountsList, ToggleSelectedAccountAction>(
@@ -54,7 +58,7 @@ Reducer<AccountsList> accountReducer = combineReducers<AccountsList>([
 
 AccountsList successAccountsReducer(
     AccountsList accounts, SuccessAccountAction action) {
-  /// Move this to another middlewear
+  /// Move this to another middleware
   List<Account> allAccounts = action.payload ?? accounts.allAccounts;
   allAccounts.sort((a1, a2) => a1.accountPlaidID.compareTo(a2.accountPlaidID));
   List<Account> updatedSelectedAccounts = [];
@@ -80,6 +84,34 @@ AccountsList errorAccountsReducer(
 AccountsList loadAccountsReducer(
     AccountsList accounts, LoadAccountAction action) {
   return accounts.copyWith(status: Status.LOADING, error: "");
+}
+
+AccountsList loadAccountItemReducer(
+    AccountsList accounts, LoadAccountItemAction action) {
+  Map<int, Status> newMap = {}..addAll(accounts.accountsByItemStatus);
+  newMap[action.itemID] = Status.LOADING;
+//  for (int itemID in newMap.keys) {
+//    if (itemID == action.itemID) {
+//      newMap[itemID] = Status.LOADING;
+//    } else {
+//      newMap[action.itemID] = Status.LOADING;
+//    }
+//  }
+  return accounts.copyWith(accountsByItemStatus: newMap);
+}
+
+AccountsList successAccountItemReducer(
+    AccountsList accounts, SuccessAccountItemAction action) {
+  Map<int, Status> newMap = {}..addAll(accounts.accountsByItemStatus);
+  newMap[action.itemID] = Status.SUCCESS;
+  return accounts.copyWith(accountsByItemStatus: newMap);
+}
+
+AccountsList errorAccountItemReducer(
+    AccountsList accounts, ErrorAccountItemAction action) {
+  Map<int, Status> newMap = {}..addAll(accounts.accountsByItemStatus);
+  newMap[action.itemID] = Status.ERROR;
+  return accounts.copyWith(accountsByItemStatus: newMap);
 }
 
 AccountsList toggleSelectedAccountReducer(

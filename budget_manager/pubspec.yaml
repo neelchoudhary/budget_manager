@@ -34,7 +34,8 @@ dependencies:
   dots_indicator: ^1.1.0
   percent_indicator: ^2.1.1+1
   flutter_redux: ^0.6.0
-  redux_thunk: ^0.3.0
+  flutter_spinkit: ^4.1.1+1
+  equatable: ^1.0.2
 
 
 dev_dependencies:

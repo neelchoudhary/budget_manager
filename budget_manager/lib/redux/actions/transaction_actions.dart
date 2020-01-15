@@ -1,4 +1,3 @@
-import 'package:budget_manager/models/budget_category.dart';
 import 'package:budget_manager/redux/models/account.dart';
 import 'package:budget_manager/redux/models/budget.dart';
 import 'package:budget_manager/redux/models/budget_category.dart';

@@ -1,5 +1,3 @@
-import 'package:budget_manager/redux/actions/account_actions.dart';
-import 'package:budget_manager/redux/actions/item_actions.dart';
 import 'package:budget_manager/redux/middlewares.dart';
 import 'package:budget_manager/redux/models/app_state.dart';
 import 'package:budget_manager/redux/reducers.dart';
@@ -10,12 +8,10 @@ import 'package:budget_manager/screens/funds_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_redux/flutter_redux.dart';
 import 'package:redux/redux.dart';
-import 'package:redux_thunk/redux_thunk.dart';
 
 void main() {
   final store = new Store<AppState>(appStateReducer,
       middleware: [
-        thunkMiddleware,
         CategoriesMiddleware(),
         BudgetsMiddleware(),
         ItemsMiddleware(),

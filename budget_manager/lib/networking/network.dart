@@ -23,6 +23,7 @@ class Network {
       List<String> accountMasks,
       List<String> accountSubtypes,
       List<String> accountPlaidIDs}) async {
+    await Future.delayed(Duration(milliseconds: delay));
     Item item = await _addItemToServer(
         userID: userID,
         publicToken: publicToken,
@@ -39,6 +40,8 @@ class Network {
     return;
   }
 
+  static int delay = 250;
+
   /// TODO add.
   static Future<Item> _addItemToServer(
       {int userID,
@@ -47,6 +50,7 @@ class Network {
       List<String> accountNames,
       List<String> accountMasks,
       List<String> accountSubtypes}) async {
+    await Future.delayed(Duration(milliseconds: delay));
     final http.Response responseAccessToken = await http.post(
         '$_baseUri/items/$userID/$publicToken/$institutionID/${accountNames[0]}/${accountMasks[0]}/${accountSubtypes[0]}',
         headers: _jsonHeader);
@@ -68,6 +72,8 @@ class Network {
   }
 
   static Future<List<Item>> getItemsFromServer({int userID}) async {
+    await Future.delayed(Duration(milliseconds: delay));
+
     final http.Response responseAccessToken =
         await http.get('$_baseUri/items/$userID', headers: _jsonHeader);
     responsePrint(responseAccessToken.statusCode, responseAccessToken.body);
@@ -84,6 +90,8 @@ class Network {
 
   /// TODO remove
   static Future<void> removeItemFromServer({int userID, int itemID}) async {
+    await Future.delayed(Duration(milliseconds: delay));
+
     final http.Response response = await http
         .delete('$_baseUri/items/$userID/$itemID', headers: _jsonHeader);
     responsePrint(response.statusCode, response.body);
@@ -96,6 +104,8 @@ class Network {
       int itemID,
       String institutionPlaidID,
       List<String> accountPlaidIDs}) async {
+    await Future.delayed(Duration(milliseconds: delay));
+
     final http.Response responseAccounts = await http.post(
         '$_baseUri/accounts/$userID/$itemID/$institutionPlaidID',
         headers: _jsonHeader);
@@ -113,6 +123,8 @@ class Network {
   /// TODO update
   static Future<void> toggleAccountsInServer(
       {int itemID, List<Account> allAccounts}) async {
+    await Future.delayed(Duration(milliseconds: delay));
+
     for (Account account in allAccounts) {
       await http.put(
           '$_baseUri/accounts/select_id/$itemID/${account.id}/${account.selected}',
@@ -123,6 +135,8 @@ class Network {
 
   /// TODO update
   static Future<void> hideAccountInServer({int itemID, int accountID}) async {
+    await Future.delayed(Duration(milliseconds: delay));
+
     final http.Response response = await http.put(
         '$_baseUri/accounts/select_id/$itemID/$accountID/false',
         headers: _jsonHeader);
@@ -143,6 +157,8 @@ class Network {
   }
 
   static Future<List<Account>> getAccountsFromServer({List<Item> items}) async {
+    await Future.delayed(Duration(milliseconds: delay));
+
     List<Account> allAccounts = [];
     List<Account> selectedAccounts = [];
     for (Item item in items) {
