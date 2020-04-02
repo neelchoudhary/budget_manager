@@ -36,7 +36,7 @@ class BudgetManager extends StatelessWidget {
       store: this.store,
       child: MaterialApp(
         routes: {
-          '/': (context) => AccountsPage(),
+          '/': (context) => DashboardPage(),
           '/budget': (context) => BudgetPage(),
           '/funds': (context) => FundsPage(),
           '/accounts': (context) => AccountsPage(),

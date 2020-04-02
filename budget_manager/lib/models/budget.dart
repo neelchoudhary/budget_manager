@@ -1,6 +1,6 @@
 import 'package:budget_manager/controller/data_controller.dart';
 import 'package:budget_manager/models/budget_category.dart';
-import 'package:budget_manager/utilities/constants.dart';
+import 'package:budget_manager/utils/constants.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 

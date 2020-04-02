@@ -6,7 +6,7 @@ import 'package:budget_manager/redux/models/item.dart';
 import 'package:budget_manager/screens/accounts_page_institution_view_model.dart';
 import 'package:budget_manager/screens/accounts_page_sliding_panel_view_model.dart';
 import 'package:budget_manager/screens/accounts_page_view_model.dart';
-import 'package:budget_manager/utilities/constants.dart';
+import 'package:budget_manager/utils/constants.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';

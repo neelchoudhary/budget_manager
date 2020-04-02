@@ -2,7 +2,7 @@ import 'package:budget_manager/components/transaction_tile.dart';
 import 'package:budget_manager/controller/data_controller.dart';
 import 'package:budget_manager/models/budget.dart';
 import 'package:budget_manager/models/transaction.dart';
-import 'package:budget_manager/utilities/constants.dart';
+import 'package:budget_manager/utils/constants.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
